@@ -9,6 +9,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 from torchvision import datasets, transforms
+from tqdm import tqdm
 
 from src.components.artifacts import DataSplitArtifact
 
@@ -92,7 +93,7 @@ class ModelTrainer:
 
         return train_loader, val_loader
 
-    def _run_epoch(self, dataloader: DataLoader, training: bool) -> EpochMetrics:
+    def _run_epoch(self, dataloader: DataLoader, training: bool, epoch_index: int, num_epochs: int) -> EpochMetrics:
         if training:
             self.model.train()
         else:
@@ -103,8 +104,17 @@ class ModelTrainer:
         total = 0
 
         context = torch.enable_grad() if training else torch.no_grad()
+        phase_name = "train" if training else "val"
+        progress_bar = tqdm(
+            dataloader,
+            desc=f"Epoch [{epoch_index}/{num_epochs}] {phase_name}",
+            leave=False,
+            ascii=True,
+            dynamic_ncols=True,
+        )
+
         with context:
-            for images, labels in dataloader:
+            for images, labels in progress_bar:
                 images = images.to(self.device)
                 labels = labels.to(self.device)
 
@@ -124,6 +134,11 @@ class ModelTrainer:
                 correct += (predictions == labels).sum().item()
                 total += batch_size
 
+                progress_bar.set_postfix(
+                    loss=f"{(running_loss / total):.4f}" if total else "0.0000",
+                    acc=f"{((correct / total) * 100):.2f}%" if total else "0.00%",
+                )
+
         average_loss = running_loss / total if total else 0.0
         accuracy = correct / total if total else 0.0
         return EpochMetrics(loss=average_loss, accuracy=accuracy)
@@ -135,8 +150,12 @@ class ModelTrainer:
 
         for epoch in range(num_epochs):
             print(f"[ModelTrainer.train] epoch {epoch + 1}/{num_epochs} started", flush=True)
-            train_metrics = self._run_epoch(train_loader, training=True)
-            val_metrics = self._run_epoch(val_loader, training=False) if val_loader is not None else None
+            train_metrics = self._run_epoch(train_loader, training=True, epoch_index=epoch + 1, num_epochs=num_epochs)
+            val_metrics = (
+                self._run_epoch(val_loader, training=False, epoch_index=epoch + 1, num_epochs=num_epochs)
+                if val_loader is not None
+                else None
+            )
 
             if val_metrics is not None:
                 print(
