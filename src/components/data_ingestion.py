@@ -61,5 +61,5 @@ class DataIngestion:
         )
 
         artifact_path = Path(self.config.artifacts_dir) / self.config.split_file_name
-    print(f"[DataIngestion.ingest] saving split artifact to {artifact_path}", flush=True)
+        print(f"[DataIngestion.ingest] saving split artifact to {artifact_path}", flush=True)
         return artifact.save(artifact_path)
