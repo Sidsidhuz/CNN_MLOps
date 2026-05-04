@@ -126,8 +126,8 @@ class ModelTrainer:
         history: list[dict[str, Any]] = []
 
         for epoch in range(num_epochs):
-            train_metrics = self._run_epoch(self.train_loader, training=True)
-            val_metrics = self._run_epoch(self.val_loader, training=False) if self.val_loader is not None else None
+            train_metrics = self._run_epoch(train_loader, training=True)
+            val_metrics = self._run_epoch(val_loader, training=False) if val_loader is not None else None
 
             if val_metrics is not None:
                 print(
