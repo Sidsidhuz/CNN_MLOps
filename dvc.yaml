@@ -1,0 +1,14 @@
+stages:
+  train:
+    cmd: >
+      python train.py --data-dir "G:/Crop Diseases Dataset/Crop Diseases/Crop___Disease/Rice"
+      --output-model-path artifacts/model.pth --image-size 150 --batch-size 32
+      --val-split 0.2 --seed 42 --epochs 25 --learning-rate 0.001
+    deps:
+      - train.py
+      - src
+      - requirements.txt
+      - G:/Crop Diseases Dataset/Crop Diseases/Crop___Disease/Rice
+    outs:
+      - artifacts/model.pth
+      - artifacts/data_split.json
