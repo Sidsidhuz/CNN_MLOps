@@ -7,7 +7,11 @@ from src.pipeline.train_pipeline import TrainingPipeline
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train the banana leaf disease classifier")
     parser.add_argument("--data-dir", required=True, help="Path to the ImageFolder dataset root")
-    parser.add_argument("--output-model-path", default="artifacts/model.pth", help="Path to save the trained model")
+    parser.add_argument(
+        "--output-model-path",
+        default=None,
+        help="Optional explicit model path. If omitted, saves as artifacts/<crop>_model.pth",
+    )
     parser.add_argument("--image-size", type=int, default=150, help="Input image size")
     parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
     parser.add_argument("--val-split", type=float, default=0.2, help="Validation split ratio")

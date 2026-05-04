@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
+import json
 
 import torch
 import torch.nn as nn
@@ -145,43 +147,82 @@ class ModelTrainer:
 
     def train(self, split_file_path: str, num_epochs: int) -> list[dict[str, Any]]:
         print("[ModelTrainer.train] starting training loop", flush=True)
+        split_artifact = DataSplitArtifact.load(split_file_path)
         train_loader, val_loader = self._create_dataloaders(split_file_path)
         history: list[dict[str, Any]] = []
+        import mlflow
+        import mlflow.pytorch
 
-        for epoch in range(num_epochs):
-            print(f"[ModelTrainer.train] epoch {epoch + 1}/{num_epochs} started", flush=True)
-            train_metrics = self._run_epoch(train_loader, training=True, epoch_index=epoch + 1, num_epochs=num_epochs)
-            val_metrics = (
-                self._run_epoch(val_loader, training=False, epoch_index=epoch + 1, num_epochs=num_epochs)
-                if val_loader is not None
-                else None
+        mlflow.set_tracking_uri(Path("mlruns").resolve().as_uri())
+        mlflow.set_experiment("leaf_disease_training")
+
+        crop_name = Path(split_artifact.data_dir).name.strip().lower().replace(" ", "_")
+        crop_name = "".join(character if character.isalnum() or character == "_" else "_" for character in crop_name)
+        registered_model_name = f"{crop_name}_model"
+
+        with mlflow.start_run():
+            mlflow.log_params(
+                {
+                    "epochs": num_epochs,
+                    "learning_rate": self.optimizer.param_groups[0]["lr"],
+                    "batch_size": train_loader.batch_size,
+                    "device": str(self.device),
+                }
             )
 
-            if val_metrics is not None:
-                print(
-                    f"Epoch [{epoch + 1}/{num_epochs}] "
-                    f"Train Loss: {train_metrics.loss:.4f} "
-                    f"Train Acc: {train_metrics.accuracy * 100:.2f}% "
-                    f"Val Loss: {val_metrics.loss:.4f} "
-                    f"Val Acc: {val_metrics.accuracy * 100:.2f}%"
-                )
-            else:
-                print(
-                    f"Epoch [{epoch + 1}/{num_epochs}] "
-                    f"Loss: {train_metrics.loss:.4f} "
-                    f"Accuracy: {train_metrics.accuracy * 100:.2f}%"
+            for epoch in range(num_epochs):
+                print(f"[ModelTrainer.train] epoch {epoch + 1}/{num_epochs} started", flush=True)
+                train_metrics = self._run_epoch(train_loader, training=True, epoch_index=epoch + 1, num_epochs=num_epochs)
+                val_metrics = (
+                    self._run_epoch(val_loader, training=False, epoch_index=epoch + 1, num_epochs=num_epochs)
+                    if val_loader is not None
+                    else None
                 )
 
-            history.append(
-                {
-                    "epoch": epoch + 1,
+                if val_metrics is not None:
+                    print(
+                        f"Epoch [{epoch + 1}/{num_epochs}] "
+                        f"Train Loss: {train_metrics.loss:.4f} "
+                        f"Train Acc: {train_metrics.accuracy * 100:.2f}% "
+                        f"Val Loss: {val_metrics.loss:.4f} "
+                        f"Val Acc: {val_metrics.accuracy * 100:.2f}%"
+                    )
+                else:
+                    print(
+                        f"Epoch [{epoch + 1}/{num_epochs}] "
+                        f"Loss: {train_metrics.loss:.4f} "
+                        f"Accuracy: {train_metrics.accuracy * 100:.2f}%"
+                    )
+
+                metrics_payload = {
                     "train_loss": train_metrics.loss,
                     "train_accuracy": train_metrics.accuracy,
                     "val_loss": val_metrics.loss if val_metrics is not None else None,
                     "val_accuracy": val_metrics.accuracy if val_metrics is not None else None,
                 }
-            )
+
+                mlflow.log_metrics(
+                    {key: value for key, value in metrics_payload.items() if value is not None},
+                    step=epoch + 1,
+                )
+
+                history.append(
+                    {
+                        "epoch": epoch + 1,
+                        **metrics_payload,
+                    }
+                )
+
+            mlflow.pytorch.log_model(self.model, "model", registered_model_name=registered_model_name)
 
         print("[ModelTrainer.train] training loop complete", flush=True)
+        self._save_metrics(history)
 
         return history
+
+    def _save_metrics(self, history: list[dict[str, Any]]) -> None:
+        metrics_path = Path("artifacts") / "metrics.json"
+        metrics_path.parent.mkdir(parents=True, exist_ok=True)
+
+        final_metrics = history[-1] if history else {}
+        metrics_path.write_text(json.dumps(final_metrics, indent=2), encoding="utf-8")

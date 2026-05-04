@@ -14,7 +14,7 @@ from src.components.trainer import ModelTrainer
 @dataclass(frozen=True)
 class ModelTrainingPipelineConfig:
     split_file_path: str
-    output_model_path: str = "artifacts/model.pth"
+    output_model_path: str | None = None
     epochs: int = 25
     learning_rate: float = 1e-3
 
@@ -44,12 +44,20 @@ class ModelTrainingPipeline:
 
         print("[ModelTrainingPipeline.run] invoking ModelTrainer.train()", flush=True)
         history = trainer.train(self.config.split_file_path, self.config.epochs)
-        self._save_model(model)
+        self._save_model(model, split_artifact)
         print("[ModelTrainingPipeline.run] complete", flush=True)
         return history
 
-    def _save_model(self, model: torch.nn.Module) -> None:
-        output_path = Path(self.config.output_model_path)
+    def _resolve_output_model_path(self, split_artifact: DataSplitArtifact) -> Path:
+        if self.config.output_model_path:
+            return Path(self.config.output_model_path)
+
+        crop_name = Path(split_artifact.data_dir).name.strip().lower().replace(" ", "_")
+        crop_name = "".join(character if character.isalnum() or character == "_" else "_" for character in crop_name)
+        return Path("artifacts") / f"{crop_name}_model.pth"
+
+    def _save_model(self, model: torch.nn.Module, split_artifact: DataSplitArtifact) -> None:
+        output_path = self._resolve_output_model_path(split_artifact)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), output_path)
 
@@ -57,7 +65,11 @@ class ModelTrainingPipeline:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the model training stage")
     parser.add_argument("--split-file-path", required=True, help="Path to the split metadata file")
-    parser.add_argument("--output-model-path", default="artifacts/model.pth", help="Path to save the model")
+    parser.add_argument(
+        "--output-model-path",
+        default=None,
+        help="Optional explicit model path. If omitted, saves as artifacts/<crop>_model.pth",
+    )
     parser.add_argument("--epochs", type=int, default=25, help="Number of training epochs")
     parser.add_argument("--learning-rate", type=float, default=1e-3, help="Learning rate")
     return parser.parse_args()
