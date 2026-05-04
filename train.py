@@ -12,12 +12,12 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional explicit model path. If omitted, saves as artifacts/<crop>_model.pth",
     )
-    parser.add_argument("--image-size", type=int, default=150, help="Input image size")
-    parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
+    parser.add_argument("--image-size", type=int, default=224, help="Input image size")
+    parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
     parser.add_argument("--val-split", type=float, default=0.2, help="Validation split ratio")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--epochs", type=int, default=25, help="Number of training epochs")
-    parser.add_argument("--learning-rate", type=float, default=1e-3, help="Learning rate")
+    parser.add_argument("--epochs", type=int, default=30, help="Number of training epochs")
+    parser.add_argument("--learning-rate", type=float, default=1e-4, help="Learning rate")
     return parser.parse_args()
 
 

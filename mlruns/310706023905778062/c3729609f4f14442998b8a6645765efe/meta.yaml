@@ -1,0 +1,14 @@
+artifact_uri: file:///G:/Projects/CNN_MLOps/mlruns/310706023905778062/c3729609f4f14442998b8a6645765efe/artifacts
+end_time: 1777904585979
+entry_point_name: ''
+experiment_id: '310706023905778062'
+lifecycle_stage: active
+run_id: c3729609f4f14442998b8a6645765efe
+run_name: fearless-snake-136
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1777896808626
+status: 3
+tags: []
+user_id: Sidharth T V

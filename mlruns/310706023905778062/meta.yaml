@@ -1,0 +1,8 @@
+artifact_location: file:///G:/Projects/CNN_MLOps/mlruns/310706023905778062
+creation_time: 1777896808337
+experiment_id: '310706023905778062'
+last_update_time: 1777896808337
+lifecycle_stage: active
+name: leaf_disease_training
+trace_location: null
+workspace: default

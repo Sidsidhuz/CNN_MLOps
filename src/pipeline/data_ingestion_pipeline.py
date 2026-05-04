@@ -11,8 +11,8 @@ class DataIngestionPipelineConfig:
     data_dir: str
     artifacts_dir: str = "artifacts"
     split_file_name: str = "data_split.json"
-    image_size: int = 150
-    batch_size: int = 32
+    image_size: int = 224
+    batch_size: int = 16
     val_split: float = 0.2
     seed: int = 42
 
@@ -42,8 +42,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--data-dir", required=True, help="Path to the ImageFolder dataset root")
     parser.add_argument("--artifacts-dir", default="artifacts", help="Directory to write split metadata")
     parser.add_argument("--split-file-name", default="data_split.json", help="Name of the split metadata file")
-    parser.add_argument("--image-size", type=int, default=150, help="Input image size")
-    parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
+    parser.add_argument("--image-size", type=int, default=224, help="Input image size")
+    parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
     parser.add_argument("--val-split", type=float, default=0.2, help="Validation split ratio")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     return parser.parse_args()

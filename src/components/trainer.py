@@ -42,7 +42,7 @@ class ModelTrainer:
         print(f"[ModelTrainer.__init__] device={self.device}", flush=True)
 
     def _build_transforms(self, image_size: int) -> tuple[transforms.Compose, transforms.Compose]:
-        normalize = transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+        normalize = transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
 
         train_transform = transforms.Compose(
             [
@@ -64,7 +64,7 @@ class ModelTrainer:
 
         return train_transform, val_transform
 
-    def _create_dataloaders(self, split_file_path: str) -> tuple[DataLoader, DataLoader]:
+    def _create_dataloaders(self, split_file_path: str) -> tuple[DataLoader, DataLoader, torch.Tensor, int]:
         print(f"[ModelTrainer._create_dataloaders] loading split file {split_file_path}", flush=True)
         artifact = DataSplitArtifact.load(split_file_path)
         train_transform, val_transform = self._build_transforms(artifact.image_size)
@@ -93,7 +93,11 @@ class ModelTrainer:
             pin_memory=pin_memory,
         )
 
-        return train_loader, val_loader
+        train_targets = [train_dataset.targets[index] for index in artifact.train_indices]
+        class_counts = torch.bincount(torch.tensor(train_targets), minlength=len(artifact.class_names)).float()
+        class_weights = class_counts.sum() / (len(class_counts) * class_counts.clamp(min=1.0))
+
+        return train_loader, val_loader, class_weights.to(self.device), artifact.image_size
 
     def _run_epoch(self, dataloader: DataLoader, training: bool, epoch_index: int, num_epochs: int) -> EpochMetrics:
         if training:
@@ -148,7 +152,7 @@ class ModelTrainer:
     def train(self, split_file_path: str, num_epochs: int) -> list[dict[str, Any]]:
         print("[ModelTrainer.train] starting training loop", flush=True)
         split_artifact = DataSplitArtifact.load(split_file_path)
-        train_loader, val_loader = self._create_dataloaders(split_file_path)
+        train_loader, val_loader, class_weights, image_size = self._create_dataloaders(split_file_path)
         history: list[dict[str, Any]] = []
         import mlflow
         import mlflow.pytorch
@@ -160,6 +164,12 @@ class ModelTrainer:
         crop_name = "".join(character if character.isalnum() or character == "_" else "_" for character in crop_name)
         registered_model_name = f"{crop_name}_model"
 
+        self.criterion = nn.CrossEntropyLoss(weight=class_weights)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=0.3, patience=3)
+        best_state_dict: dict[str, torch.Tensor] | None = None
+        best_metrics: dict[str, Any] | None = None
+        best_val_loss = float("inf")
+
         with mlflow.start_run():
             mlflow.log_params(
                 {
@@ -167,11 +177,15 @@ class ModelTrainer:
                     "learning_rate": self.optimizer.param_groups[0]["lr"],
                     "batch_size": train_loader.batch_size,
                     "device": str(self.device),
+                    "image_size": image_size,
+                    "model": "efficientnet_b0",
+                    "pretrained": True,
+                    "scheduler": "ReduceLROnPlateau",
                 }
             )
 
             for epoch in range(num_epochs):
-                print(f"[ModelTrainer.train] epoch {epoch + 1}/{num_epochs} started", flush=True)
+                # print(f"[ModelTrainer.train] epoch {epoch + 1}/{num_epochs} started", flush=True)
                 train_metrics = self._run_epoch(train_loader, training=True, epoch_index=epoch + 1, num_epochs=num_epochs)
                 val_metrics = (
                     self._run_epoch(val_loader, training=False, epoch_index=epoch + 1, num_epochs=num_epochs)
@@ -213,16 +227,31 @@ class ModelTrainer:
                     }
                 )
 
+                monitored_loss = val_metrics.loss if val_metrics is not None else train_metrics.loss
+                scheduler.step(monitored_loss)
+
+                if val_metrics is not None and val_metrics.loss < best_val_loss:
+                    best_val_loss = val_metrics.loss
+                    best_state_dict = {
+                        key: value.detach().cpu().clone()
+                        for key, value in self.model.state_dict().items()
+                    }
+                    best_metrics = history[-1]
+
+            if best_state_dict is not None:
+                self.model.load_state_dict(best_state_dict)
+            if best_metrics is None and history:
+                best_metrics = history[-1]
+
             mlflow.pytorch.log_model(self.model, "model", registered_model_name=registered_model_name)
 
         print("[ModelTrainer.train] training loop complete", flush=True)
-        self._save_metrics(history)
+        self._save_metrics(best_metrics or (history[-1] if history else {}))
 
         return history
 
-    def _save_metrics(self, history: list[dict[str, Any]]) -> None:
+    def _save_metrics(self, metrics: dict[str, Any]) -> None:
         metrics_path = Path("artifacts") / "metrics.json"
         metrics_path.parent.mkdir(parents=True, exist_ok=True)
 
-        final_metrics = history[-1] if history else {}
-        metrics_path.write_text(json.dumps(final_metrics, indent=2), encoding="utf-8")
+        metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")

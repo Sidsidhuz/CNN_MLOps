@@ -3,7 +3,7 @@ stages:
   data_ingestion:
     cmd: "python -m src.pipeline.data_ingestion_pipeline --data-dir \"G:/Crop Diseases
       Dataset/Crop Diseases/Crop___Disease/Rice\" --artifacts-dir artifacts --split-file-name
-      data_split.json --image-size 150 --batch-size 32 --val-split 0.2 --seed 42\n"
+      data_split.json --image-size 224 --batch-size 16 --val-split 0.2 --seed 42\n"
     deps:
     - path: G:/Crop Diseases Dataset/Crop Diseases/Crop___Disease/Rice
       hash: md5
@@ -12,12 +12,12 @@ stages:
       nfiles: 4078
     - path: requirements.txt
       hash: md5
-      md5: 25de5e10af35ea65ab6170b59d3ecf88
-      size: 48
+      md5: 18ca83e20487a74712fa231d56a85287
+      size: 66
     - path: src
       hash: md5
-      md5: 722bbdb16e0a9e046e9f140ffa144602.dir
-      size: 78253
+      md5: 72f22e3fd8c953fa15f36b35cce80179.dir
+      size: 93059
       nfiles: 30
     - path: src/components/artifacts.py
       hash: md5
@@ -29,29 +29,29 @@ stages:
       size: 2427
     - path: src/pipeline/data_ingestion_pipeline.py
       hash: md5
-      md5: 7a8ee0b76caa8282f5b746e81ce9f061
+      md5: e8a32ae05796b763e930599f80f1eb4b
       size: 2578
     outs:
     - path: artifacts/data_split.json
       hash: md5
-      md5: 6e7c4f589fdc30187223c69569243571
+      md5: 3e5ff9df41a9d678fd60c4ce2a3e8d36
       size: 44089
   train:
     cmd: "python -m src.pipeline.model_training_pipeline --split-file-path artifacts/data_split.json
-      --output-model-path artifacts/model.pth --epochs 25 --learning-rate 0.001\n"
+      --output-model-path artifacts/rice_model.pth --epochs 30 --learning-rate 0.0001\n"
     deps:
     - path: artifacts/data_split.json
       hash: md5
-      md5: 6e7c4f589fdc30187223c69569243571
+      md5: 3e5ff9df41a9d678fd60c4ce2a3e8d36
       size: 44089
     - path: requirements.txt
       hash: md5
-      md5: 25de5e10af35ea65ab6170b59d3ecf88
-      size: 48
+      md5: 18ca83e20487a74712fa231d56a85287
+      size: 66
     - path: src
       hash: md5
-      md5: 722bbdb16e0a9e046e9f140ffa144602.dir
-      size: 78253
+      md5: 72f22e3fd8c953fa15f36b35cce80179.dir
+      size: 93059
       nfiles: 30
     - path: src/components/artifacts.py
       hash: md5
@@ -59,18 +59,22 @@ stages:
       size: 789
     - path: src/components/model.py
       hash: md5
-      md5: 8a406e30f5d6887f743151e6bed844bf
-      size: 1132
+      md5: 9b00ba82acafe57925ac0268cd374924
+      size: 764
     - path: src/components/trainer.py
       hash: md5
-      md5: cf844d6261b0f2ed8189ced768c7989d
-      size: 6955
+      md5: a6971fef889d8b6900a8b6bb987d552c
+      size: 10390
     - path: src/pipeline/model_training_pipeline.py
       hash: md5
-      md5: f80319d8d1b995e423949f0d04d39779
-      size: 2978
+      md5: 731d1f04b8f6d115144535f983f3cb48
+      size: 3563
     outs:
-    - path: artifacts/model.pth
+    - path: artifacts/metrics.json
       hash: md5
-      md5: 8a63841f0b6f6d2bfbf51e3f5dc0f4da
-      size: 512796
+      md5: 26b2cfa260fee8be206f978633004cd0
+      size: 173
+    - path: artifacts/rice_model.pth
+      hash: md5
+      md5: 147594bc0cf2bb2d98fa0a51149ad949
+      size: 16356070
