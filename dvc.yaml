@@ -2,7 +2,7 @@ stages:
   data_ingestion:
     cmd: >
       python -m src.pipeline.data_ingestion_pipeline --data-dir "G:/Crop Diseases Dataset/Crop Diseases/Crop___Disease/Rice"
-      --artifacts-dir artifacts --split-file-name data_split.json --image-size 150 --batch-size 32
+      --artifacts-dir artifacts --split-file-name data_split.json --image-size 224 --batch-size 16
       --val-split 0.2 --seed 42
     deps:
       - src/pipeline/data_ingestion_pipeline.py
@@ -16,7 +16,7 @@ stages:
   train:
     cmd: >
       python -m src.pipeline.model_training_pipeline --split-file-path artifacts/data_split.json
-      --output-model-path artifacts/model.pth --epochs 25 --learning-rate 0.001
+      --output-model-path artifacts/rice_model.pth --epochs 30 --learning-rate 0.0001
     deps:
       - src/pipeline/model_training_pipeline.py
       - src/components/trainer.py
@@ -26,4 +26,8 @@ stages:
       - requirements.txt
       - artifacts/data_split.json
     outs:
-      - artifacts/model.pth
+      - artifacts/rice_model.pth
+      - artifacts/rice_model_metadata.json
+    metrics:
+      - artifacts/metrics.json:
+          cache: false
