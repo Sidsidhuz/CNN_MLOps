@@ -1,0 +1,14 @@
+artifact_uri: file:///G:/Projects/CNN_MLOps/mlruns/310706023905778062/21d37974a4b84ea1a18fd1df71f07c06/artifacts
+end_time: 1777915709307
+entry_point_name: ''
+experiment_id: '310706023905778062'
+lifecycle_stage: active
+run_id: 21d37974a4b84ea1a18fd1df71f07c06
+run_name: worried-bug-164
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1777906196560
+status: 3
+tags: []
+user_id: Sidharth T V

@@ -1,0 +1,10 @@
+artifact_location: file:///G:/Projects/CNN_MLOps/mlruns/310706023905778062/models/m-6436204e40a14798b12f00c7f3c1775b/artifacts
+creation_timestamp: 1777904560000
+experiment_id: '310706023905778062'
+last_updated_timestamp: 1777904585676
+model_id: m-6436204e40a14798b12f00c7f3c1775b
+model_type: null
+name: model
+source_run_id: c3729609f4f14442998b8a6645765efe
+status: 2
+status_message: null
