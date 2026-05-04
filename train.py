@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from src.pipeline.train_pipeline import TrainingPipeline, TrainingPipelineConfig
+from src.pipeline.train_pipeline import TrainingPipeline
 
 
 def parse_args() -> argparse.Namespace:
@@ -21,7 +21,7 @@ def main() -> None:
     print("[main] starting training entry point", flush=True)
     args = parse_args()
     print(f"[main] parsed arguments for data_dir={args.data_dir}", flush=True)
-    config = TrainingPipelineConfig(
+    pipeline = TrainingPipeline(
         data_dir=args.data_dir,
         output_model_path=args.output_model_path,
         image_size=args.image_size,
@@ -32,8 +32,6 @@ def main() -> None:
         learning_rate=args.learning_rate,
     )
 
-    print("[main] creating TrainingPipeline", flush=True)
-    pipeline = TrainingPipeline(config)
     print("[main] invoking TrainingPipeline.run()", flush=True)
     pipeline.run()
     print("[main] training finished", flush=True)
