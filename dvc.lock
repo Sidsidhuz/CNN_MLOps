@@ -12,12 +12,12 @@ stages:
       nfiles: 4078
     - path: requirements.txt
       hash: md5
-      md5: 18ca83e20487a74712fa231d56a85287
-      size: 66
+      md5: 54923a48f087c5c519c47084df0221e9
+      size: 185
     - path: src
       hash: md5
-      md5: 72f22e3fd8c953fa15f36b35cce80179.dir
-      size: 93059
+      md5: 43978310e50055594256cb8006482be4.dir
+      size: 94442
       nfiles: 30
     - path: src/components/artifacts.py
       hash: md5
@@ -46,12 +46,12 @@ stages:
       size: 44089
     - path: requirements.txt
       hash: md5
-      md5: 18ca83e20487a74712fa231d56a85287
-      size: 66
+      md5: 54923a48f087c5c519c47084df0221e9
+      size: 185
     - path: src
       hash: md5
-      md5: 72f22e3fd8c953fa15f36b35cce80179.dir
-      size: 93059
+      md5: 6d380586a103168277c9bba29465003f.dir
+      size: 95389
       nfiles: 30
     - path: src/components/artifacts.py
       hash: md5
@@ -63,18 +63,22 @@ stages:
       size: 764
     - path: src/components/trainer.py
       hash: md5
-      md5: a6971fef889d8b6900a8b6bb987d552c
-      size: 10390
+      md5: dfbefe99d735bf8bad5231e3db20f108
+      size: 10392
     - path: src/pipeline/model_training_pipeline.py
       hash: md5
-      md5: 731d1f04b8f6d115144535f983f3cb48
-      size: 3563
+      md5: a2c70e6fffeb7097084097707c118fac
+      size: 4254
     outs:
     - path: artifacts/metrics.json
       hash: md5
-      md5: 26b2cfa260fee8be206f978633004cd0
-      size: 173
+      md5: 8e107dbc0077c4bbdbd151554bd1b341
+      size: 172
     - path: artifacts/rice_model.pth
       hash: md5
-      md5: 147594bc0cf2bb2d98fa0a51149ad949
+      md5: 44a2c69ca2fd42340fdde09f60ef4e87
       size: 16356070
+    - path: artifacts/rice_model_metadata.json
+      hash: md5
+      md5: a764953258906bc0c5edd464b0d605ab
+      size: 248

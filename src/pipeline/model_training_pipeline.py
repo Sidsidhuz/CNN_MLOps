@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -56,10 +57,24 @@ class ModelTrainingPipeline:
         crop_name = "".join(character if character.isalnum() or character == "_" else "_" for character in crop_name)
         return Path("artifacts") / f"{crop_name}_model.pth"
 
+    def _resolve_metadata_path(self, output_model_path: Path) -> Path:
+        return output_model_path.with_name(f"{output_model_path.stem}_metadata.json")
+
     def _save_model(self, model: torch.nn.Module, split_artifact: DataSplitArtifact) -> None:
         output_path = self._resolve_output_model_path(split_artifact)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), output_path)
+
+        metadata_path = self._resolve_metadata_path(output_path)
+        metadata = {
+            "crop_name": Path(split_artifact.data_dir).name,
+            "class_names": split_artifact.class_names,
+            "image_size": split_artifact.image_size,
+            "batch_size": split_artifact.batch_size,
+            "num_classes": len(split_artifact.class_names),
+            "model_name": output_path.stem,
+        }
+        metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
 
 def parse_args() -> argparse.Namespace:
