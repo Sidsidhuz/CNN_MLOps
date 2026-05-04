@@ -24,12 +24,15 @@ class DataIngestionConfig:
 class DataIngestion:
     def __init__(self, config: DataIngestionConfig) -> None:
         self.config = config
+        print(f"[DataIngestion.__init__] data_dir={self.config.data_dir}", flush=True)
 
     def ingest(self) -> str:
+        print("[DataIngestion.ingest] starting ingestion", flush=True)
         data_path = Path(self.config.data_dir)
         if not data_path.exists():
             raise FileNotFoundError(f"Dataset directory does not exist: {data_path}")
 
+        print(f"[DataIngestion.ingest] loading ImageFolder from {data_path}", flush=True)
         base_dataset = datasets.ImageFolder(root=str(data_path))
         if not base_dataset.classes:
             raise ValueError(f"No classes found in dataset directory: {data_path}")
@@ -37,6 +40,11 @@ class DataIngestion:
         dataset_size = len(base_dataset)
         val_size = int(dataset_size * self.config.val_split)
         train_size = dataset_size - val_size
+
+        print(
+            f"[DataIngestion.ingest] dataset_size={dataset_size} train_size={train_size} val_size={val_size}",
+            flush=True,
+        )
 
         generator = torch.Generator().manual_seed(self.config.seed)
         train_subset, val_subset = random_split(base_dataset, [train_size, val_size], generator=generator)
@@ -53,4 +61,5 @@ class DataIngestion:
         )
 
         artifact_path = Path(self.config.artifacts_dir) / self.config.split_file_name
+    print(f"[DataIngestion.ingest] saving split artifact to {artifact_path}", flush=True)
         return artifact.save(artifact_path)

@@ -36,6 +36,7 @@ class ModelTrainer:
         self.device = device
         self.criterion = criterion or nn.CrossEntropyLoss()
         self.optimizer = optimizer or optim.Adam(self.model.parameters(), lr=learning_rate)
+        print(f"[ModelTrainer.__init__] device={self.device}", flush=True)
 
     def _build_transforms(self, image_size: int) -> tuple[transforms.Compose, transforms.Compose]:
         normalize = transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
@@ -61,11 +62,17 @@ class ModelTrainer:
         return train_transform, val_transform
 
     def _create_dataloaders(self, split_file_path: str) -> tuple[DataLoader, DataLoader]:
+        print(f"[ModelTrainer._create_dataloaders] loading split file {split_file_path}", flush=True)
         artifact = DataSplitArtifact.load(split_file_path)
         train_transform, val_transform = self._build_transforms(artifact.image_size)
 
         train_dataset = datasets.ImageFolder(root=artifact.data_dir, transform=train_transform)
         val_dataset = datasets.ImageFolder(root=artifact.data_dir, transform=val_transform)
+
+        print(
+            f"[ModelTrainer._create_dataloaders] train_indices={len(artifact.train_indices)} val_indices={len(artifact.val_indices)}",
+            flush=True,
+        )
 
         pin_memory = torch.cuda.is_available()
         train_loader = DataLoader(
@@ -122,10 +129,12 @@ class ModelTrainer:
         return EpochMetrics(loss=average_loss, accuracy=accuracy)
 
     def train(self, split_file_path: str, num_epochs: int) -> list[dict[str, Any]]:
+        print("[ModelTrainer.train] starting training loop", flush=True)
         train_loader, val_loader = self._create_dataloaders(split_file_path)
         history: list[dict[str, Any]] = []
 
         for epoch in range(num_epochs):
+            print(f"[ModelTrainer.train] epoch {epoch + 1}/{num_epochs} started", flush=True)
             train_metrics = self._run_epoch(train_loader, training=True)
             val_metrics = self._run_epoch(val_loader, training=False) if val_loader is not None else None
 
@@ -153,5 +162,7 @@ class ModelTrainer:
                     "val_accuracy": val_metrics.accuracy if val_metrics is not None else None,
                 }
             )
+
+        print("[ModelTrainer.train] training loop complete", flush=True)
 
         return history

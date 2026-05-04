@@ -27,8 +27,10 @@ class TrainingPipeline:
     def __init__(self, config: TrainingPipelineConfig) -> None:
         self.config = config
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"[TrainingPipeline.__init__] device={self.device}", flush=True)
 
     def run(self) -> list[dict[str, float | int | None]]:
+        print("[TrainingPipeline.run] starting pipeline", flush=True)
         ingestion_config = DataIngestionConfig(
             data_dir=self.config.data_dir,
             artifacts_dir=str(Path(self.config.output_model_path).parent),
@@ -37,10 +39,17 @@ class TrainingPipeline:
             val_split=self.config.val_split,
             seed=self.config.seed,
         )
+        print("[TrainingPipeline.run] invoking DataIngestion.ingest()", flush=True)
         split_file_path = DataIngestion(ingestion_config).ingest()
+        print(f"[TrainingPipeline.run] split artifact created at {split_file_path}", flush=True)
         split_artifact = DataSplitArtifact.load(split_file_path)
 
+        print(
+            f"[TrainingPipeline.run] creating LeafDiseaseCNN with num_classes={len(split_artifact.class_names)}",
+            flush=True,
+        )
         model = LeafDiseaseCNN(num_classes=len(split_artifact.class_names)).to(self.device)
+        print("[TrainingPipeline.run] creating ModelTrainer", flush=True)
         trainer = ModelTrainer(
             model=model,
             train_loader=None,
@@ -49,8 +58,11 @@ class TrainingPipeline:
             learning_rate=self.config.learning_rate,
         )
 
+        print("[TrainingPipeline.run] invoking ModelTrainer.train()", flush=True)
         history = trainer.train(split_file_path, self.config.epochs)
+        print("[TrainingPipeline.run] saving model", flush=True)
         self._save_model(model)
+        print("[TrainingPipeline.run] pipeline complete", flush=True)
         return history
 
     def _save_model(self, model: torch.nn.Module) -> None:
