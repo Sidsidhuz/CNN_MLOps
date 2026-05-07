@@ -2,6 +2,10 @@
 .idea/
 __pycache__/
 *.pyc
-artifacts/
+artifacts/*
+!artifacts/.gitkeep
+!artifacts/data_split.json
+!artifacts/*.json
+!artifacts/*.pth
 .dvc/cache/
 .dvc/tmp/
