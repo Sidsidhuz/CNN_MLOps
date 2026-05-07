@@ -28,14 +28,16 @@ def get_predictor() -> CropPredictor:
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request) -> HTMLResponse:
     predictor = get_predictor()
+    crop_options = predictor.available_crops()
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
-            "crop_options": predictor.available_crops(),
+            "crop_options": crop_options,
             "prediction": None,
             "selected_crop": None,
             "error": None,
+            "has_models": bool(crop_options),
         },
     )
 
@@ -43,16 +45,18 @@ async def home(request: Request) -> HTMLResponse:
 @app.post("/predict", response_class=HTMLResponse)
 async def predict(request: Request, crop: str = Form(...), image: UploadFile = File(...)) -> HTMLResponse:
     predictor = get_predictor()
+    crop_options = predictor.available_crops()
     try:
         result = await predictor.predict(crop=crop, uploaded_file=image)
         return templates.TemplateResponse(
             request=request,
             name="index.html",
             context={
-                "crop_options": predictor.available_crops(),
+                "crop_options": crop_options,
                 "prediction": result,
                 "selected_crop": crop,
                 "error": None,
+                "has_models": bool(crop_options),
             },
         )
     except Exception as exc:
@@ -60,9 +64,10 @@ async def predict(request: Request, crop: str = Form(...), image: UploadFile = F
             request=request,
             name="index.html",
             context={
-                "crop_options": predictor.available_crops(),
+                "crop_options": crop_options,
                 "prediction": None,
                 "selected_crop": crop,
                 "error": str(exc),
+                "has_models": bool(crop_options),
             },
         )

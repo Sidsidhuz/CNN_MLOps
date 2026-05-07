@@ -17,7 +17,8 @@ RUN pip install --upgrade pip \
 
 COPY src ./src
 COPY app ./app
-COPY artifacts ./artifacts
+
+RUN mkdir -p artifacts
 
 EXPOSE 8000
 

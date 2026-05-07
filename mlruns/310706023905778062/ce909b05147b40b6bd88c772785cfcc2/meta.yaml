@@ -1,0 +1,14 @@
+artifact_uri: file:///G:/Projects/CNN_MLOps/mlruns/310706023905778062/ce909b05147b40b6bd88c772785cfcc2/artifacts
+end_time: 1777969168837
+entry_point_name: ''
+experiment_id: '310706023905778062'
+lifecycle_stage: active
+run_id: ce909b05147b40b6bd88c772785cfcc2
+run_name: fearless-rook-244
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1777969123079
+status: 4
+tags: []
+user_id: Sidharth T V

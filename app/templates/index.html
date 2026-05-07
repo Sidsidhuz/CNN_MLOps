@@ -16,6 +16,8 @@
         .result { background: #0f5132; }
         .error { background: #7f1d1d; }
         .hint { color: #94a3b8; font-size: 0.95rem; }
+        .empty-state { margin-top: 20px; padding: 16px; border-radius: 12px; background: #1e293b; border: 1px dashed #475569; color: #cbd5e1; }
+        button:disabled, select:disabled, input:disabled { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -23,18 +25,29 @@
         <h1>Crop Disease Classifier</h1>
         <p class="hint">Select the crop, upload the leaf image, and click Predict.</p>
 
+        {% if not has_models %}
+            <div class="empty-state">
+                No trained model files were found in <strong>artifacts/</strong>.
+                Train the project first so the dropdown can list crops.
+            </div>
+        {% endif %}
+
         <form action="/predict" method="post" enctype="multipart/form-data">
             <label for="crop">Crop</label>
-            <select id="crop" name="crop" required>
-                {% for crop_name in crop_options %}
-                    <option value="{{ crop_name }}" {% if selected_crop == crop_name %}selected{% endif %}>{{ crop_name|capitalize }}</option>
-                {% endfor %}
+            <select id="crop" name="crop" required {% if not has_models %}disabled{% endif %}>
+                {% if crop_options %}
+                    {% for crop_name in crop_options %}
+                        <option value="{{ crop_name }}" {% if selected_crop == crop_name %}selected{% endif %}>{{ crop_name|capitalize }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="">No trained models available</option>
+                {% endif %}
             </select>
 
             <label for="image">Choose Image</label>
-            <input id="image" name="image" type="file" accept="image/*" required>
+            <input id="image" name="image" type="file" accept="image/*" required {% if not has_models %}disabled{% endif %}>
 
-            <button type="submit">Predict</button>
+            <button type="submit" {% if not has_models %}disabled{% endif %}>Predict</button>
         </form>
 
         {% if prediction %}
