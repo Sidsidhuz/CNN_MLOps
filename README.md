@@ -239,6 +239,15 @@ Run the smoke tests locally:
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
+## System Architecture
+
+The following diagram shows the end-to-end MLOps workflow of the Crop Disease Classification system.
+
+<p align="center">
+  <img src="./architecture-diagram.png" width="900"/>
+</p>
+
+
 ## Troubleshooting
 
 ### `dvc repro` fails
